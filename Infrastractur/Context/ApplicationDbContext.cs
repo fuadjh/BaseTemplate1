@@ -1,4 +1,7 @@
 ﻿
+using Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -11,7 +14,7 @@ using System.Transactions;
 
 namespace Infrastructure.Context
 {
-    public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
+    public class ApplicationDbContext(DbContextOptions options) : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
     {
        // public DbSet<AccountHolder> accountHolders => Set<AccountHolder>();
        // public DbSet<Account> accounts => Set<Account>();

@@ -54,3 +54,8 @@ Features فودر
 این مهم در پوشه  
 Wrapper از Common 
 قرارداده شده 
+*******************************************************************
+webApi نصب شد
+Microsoft.AspNetCore.Identity.EntityFrameworkCore
+رو اینفراستراکتیور نصب شد
+
