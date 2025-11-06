@@ -57,5 +57,10 @@ Wrapper از Common
 *******************************************************************
 webApi نصب شد
 Microsoft.AspNetCore.Identity.EntityFrameworkCore
+Microsoft.AspNetCore.Authentication.JwtBearer
 رو اینفراستراکتیور نصب شد
+روی وب ای پی ای هم باید 
+Microsoft.EntityFrameworkCore.Design
+نصب باشد 
+
 

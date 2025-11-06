@@ -1,6 +1,8 @@
-﻿using Application.Repositories;
+﻿using Application.Interfaces;
+using Application.Interfaces.Repositories;
 using Infrastructure.Context;
 using Infrastructure.Repositories;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +28,14 @@ namespace Infrastructure
                 .AddTransient(typeof(IReadRepositoryAsync<,>), typeof(ReadRepositoryAsync<,>))
                 .AddTransient(typeof(IWriteRepositoryAsync<,>), typeof(WriteRepositoryAsync<,>))
                 .AddTransient(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
+        }
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+        {
+            // سایر تنظیمات EF Core و Identity ...
+
+            services.AddScoped<IIdentityService, IdentityService>();
+
+            return services;
         }
     }
 }

@@ -14,11 +14,17 @@ using System.Transactions;
 
 namespace Infrastructure.Context
 {
-    public class ApplicationDbContext(DbContextOptions options) : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<int>, int>
     {
-       // public DbSet<AccountHolder> accountHolders => Set<AccountHolder>();
-       // public DbSet<Account> accounts => Set<Account>();
-       // public DbSet<Transection> Transections => Set<Transection>();
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+
+        {
+        }
+
+        // public DbSet<AccountHolder> accountHolders => Set<AccountHolder>();
+        // public DbSet<Account> accounts => Set<Account>();
+        // public DbSet<Transection> Transections => Set<Transection>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

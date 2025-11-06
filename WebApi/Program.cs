@@ -1,4 +1,6 @@
-
+﻿
+using Microsoft.Extensions.Configuration;
+using Infrastructure;
 namespace WebApi
 {
     public class Program
@@ -7,6 +9,9 @@ namespace WebApi
         {
             var builder = WebApplication.CreateBuilder(args);
 
+
+            // فقط با یک خط تمام تنظیمات اینفراستراکچر را اضافه می‌کنیم
+            builder.Services.AddInfrastructure(builder.Configuration);
             // Add services to the container.
 
             builder.Services.AddControllers();
