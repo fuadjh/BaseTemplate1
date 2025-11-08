@@ -1,12 +1,14 @@
-﻿using System;
+﻿using Application.Features.Identity.Command;
+using Application.Interfaces;
+using Common.RequestsDto;
+using Common.Wrapper;
+using Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using Application.Interfaces;
-using Infrastructure.Identity;
-using Microsoft.AspNetCore.Identity;
 
 namespace Infrastructure.Services
 {
@@ -14,41 +16,53 @@ namespace Infrastructure.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IJwtTokenService _jwtTokenService;
 
-        public IdentityService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public IdentityService(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            IJwtTokenService jwtTokenService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _jwtTokenService = jwtTokenService;
         }
 
-        public async Task<(bool Succeeded, string? UserId, string? Error)> RegisterAsync(string email, string password, string fullName)
+        public async Task<ResponseWrapper<string>> RegisterAsync(RegisterUserRequest command)
         {
+            var existingUser = await _userManager.FindByEmailAsync(command.email);
+            if (existingUser != null)
+                return new ResponseWrapper<string>().Failed("User with this email already exists.");
+
             var user = new ApplicationUser
             {
-                UserName = email,
-                Email = email,
-                FullName = fullName
+                UserName = command.fullName,
+                Email = command.email
             };
 
-            var result = await _userManager.CreateAsync(user, password);
+            var result = await _userManager.CreateAsync(user, command.password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return new ResponseWrapper<string>().Failed(errors);
+            }
 
-            if (result.Succeeded)
-                return (true, user.Id.ToString(), null);
-
-            var error = string.Join(", ", result.Errors.Select(e => e.Description));
-            return (false, null, error);
+            var token = await _jwtTokenService.GenerateTokenAsync(user);
+            return new ResponseWrapper<string>().Success(token, "User registered successfully");
         }
 
-        public async Task<string?> LoginAsync(string email, string password)
+        public async Task<ResponseWrapper<string>> LoginAsync(LoginRequest command)
         {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null) return null;
+            var user = await _userManager.FindByEmailAsync(command.Email);
+            if (user == null)
+                return new ResponseWrapper<string>().Failed("User not found");
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
-            if (!result.Succeeded) return null;
+            var result = await _signInManager.CheckPasswordSignInAsync(user, command.Password, false);
+            if (!result.Succeeded)
+                return new ResponseWrapper<string>().Failed("Invalid credentials");
 
-            // 🔸 در اینجا معمولاً JWT Token ساخته می‌شود، اما بعداً اضافه می‌کنیم.
-            return user.Id.ToString();
+            var token = await _jwtTokenService.GenerateTokenAsync(user);
+            return new ResponseWrapper<string>().Success(token, "Login successful");
         }
     }
 }

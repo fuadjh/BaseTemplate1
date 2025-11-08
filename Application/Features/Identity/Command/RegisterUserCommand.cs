@@ -30,12 +30,9 @@ namespace Application.Features.Identity.Command
 
         public async Task<ResponseWrapper<string>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
         {
-            var result = await _identityService.RegisterAsync(request.registerUserRequest.email, request.registerUserRequest.password, request.registerUserRequest.fullName);
+            var result = await _identityService.RegisterAsync(request.registerUserRequest);
 
-            if (result.Succeeded)
-                return new ResponseWrapper<string>().Success(result.UserId, "User registered successfully");
-
-            return new ResponseWrapper<string>().Failed(result.Error ?? "User registration failed");
+            return result;
         }
     }
 

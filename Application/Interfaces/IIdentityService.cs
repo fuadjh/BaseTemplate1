@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Common.RequestsDto;
+using Common.Wrapper;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,8 +10,8 @@ namespace Application.Interfaces
 {
     public interface IIdentityService
     {
-        Task<(bool Succeeded, string? UserId, string? Error)> RegisterAsync(string email, string password, string fullName);
-        Task<string?> LoginAsync(string email, string password);
+        Task<ResponseWrapper<string>> RegisterAsync(RegisterUserRequest registerUserCommand);
+        Task<ResponseWrapper<string>> LoginAsync(LoginRequest loginRequest);
     }
 }
 
