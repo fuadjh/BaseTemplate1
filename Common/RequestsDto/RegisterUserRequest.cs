@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Common.RequestsDto
 {
-    public class RegisterUserRequest {
+    public record RegisterUserRequest (
 
-        public string email { get; set; }
-        public string fullName { get; set; }
-        public string password { get; set; }
-    }
+         string email ,
+         string fullName ,
+         string password 
+   );
 
 }

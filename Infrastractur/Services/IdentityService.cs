@@ -15,15 +15,18 @@ namespace Infrastructure.Services
     public class IdentityService : IIdentityService
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IJwtTokenService _jwtTokenService;
 
         public IdentityService(
             UserManager<ApplicationUser> userManager,
+            RoleManager<ApplicationRole> roleManager,
             SignInManager<ApplicationUser> signInManager,
             IJwtTokenService jwtTokenService)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _signInManager = signInManager;
             _jwtTokenService = jwtTokenService;
         }
@@ -51,6 +54,33 @@ namespace Infrastructure.Services
             return new ResponseWrapper<string>().Success(token, "User registered successfully");
         }
 
+        public async Task<ResponseWrapper<string>> CreateRoleAsync(string roleName)
+        {
+            if (await _roleManager.RoleExistsAsync(roleName))
+                return new ResponseWrapper<string>().Failed("Role already exists.");
+
+            var result = await _roleManager.CreateAsync(new ApplicationRole { Name = roleName });
+
+            return result.Succeeded
+                ? new ResponseWrapper<string>().Success(roleName, "Role created successfully.")
+                :new ResponseWrapper<string>().Failed("Role creation failed.");
+        }
+
+        public async Task<ResponseWrapper<string>> AddRoleToUserAsync(string email, string roleName)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return new ResponseWrapper<string>().Failed("User not found.");
+
+            if (!await _roleManager.RoleExistsAsync(roleName))
+                return new ResponseWrapper<string>().Failed("Role not found.");
+
+            var result = await _userManager.AddToRoleAsync(user, roleName);
+            return result.Succeeded
+                ? new ResponseWrapper<string>().Success(roleName, "Role added successfully.")
+                : new ResponseWrapper<string>().Failed("Adding role failed.");
+        }
+
         public async Task<ResponseWrapper<string>> LoginAsync(LoginRequest command)
         {
             var user = await _userManager.FindByEmailAsync(command.Email);
@@ -64,5 +94,6 @@ namespace Infrastructure.Services
             var token = await _jwtTokenService.GenerateTokenAsync(user);
             return new ResponseWrapper<string>().Success(token, "Login successful");
         }
+
     }
 }

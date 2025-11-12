@@ -1,4 +1,5 @@
-﻿using Infrastructure.Context;
+﻿using Application.Interfaces;
+using Infrastructure.Context;
 using Infrastructure.Identity;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -20,7 +21,7 @@ namespace Infrastructure
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
             // ✅ Identity
-            services.AddIdentity<ApplicationUser, IdentityRole<int>>(options =>
+            services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
                 options.Password.RequireDigit = true;
                 options.Password.RequiredLength = 8;
@@ -60,7 +61,7 @@ namespace Infrastructure
 
             // ✅ JWT Token Service
             services.AddScoped<IJwtTokenService, JwtTokenService>();
-
+            services.AddScoped<IIdentityService, IdentityService>();
             return services;
         }
     }

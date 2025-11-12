@@ -16,6 +16,7 @@ namespace Infrastructure
 {
     public static class Startup
     {
+
         public static IServiceCollection AddDataBase(this IServiceCollection services,IConfiguration configuration) 
         {
             return services
@@ -37,5 +38,6 @@ namespace Infrastructure
 
             return services;
         }
+
     }
 }

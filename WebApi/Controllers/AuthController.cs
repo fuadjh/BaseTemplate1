@@ -7,27 +7,26 @@ using Infrastructure.Services;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.Controllers;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    public class AuthController : BaseApiController
     {
-       private readonly ISender _sender; // از MediatR برای ارسال کامند
-
-        public AuthController(ISender sender)
+        public AuthController(ISender sender) : base(sender)
         {
-            _sender = sender;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterUserCommand command)
+        public async Task<IActionResult> Register([FromBody] RegisterUserRequest command)
         {
             if (!ModelState.IsValid)
                 return BadRequest(new ResponseWrapper<string>().Failed("Invalid request data."));
 
-            var response = await _sender.Send(command);
+            var response = await Sender.Send(new RegisterUserCommand {registerUserRequest =command });
 
             if (response.IsSuccess)
                 return Ok(response);
@@ -35,25 +34,33 @@ namespace WebAPI.Controllers
             return BadRequest(response);
         }
 
-        //[HttpPost("login")]
-        //public async Task<IActionResult> Login([FromBody] LoginRequest request)
-        //{
-        //    var user = await _userManager.FindByEmailAsync(request.Email);
-        //    if (user == null)
-        //        return Unauthorized("User not found");
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(new ResponseWrapper<string>().Failed("Invalid request data."));
 
-        //    var validPassword = await _userManager.CheckPasswordAsync(user, request.Password);
-        //    if (!validPassword)
-        //        return Unauthorized("Invalid credentials");
+            var response = await Sender.Send(new LoginUserCommand { loginRequest=request});
 
-        //    var token = await _jwtTokenService.GenerateTokenAsync(user);
+            if (response.IsSuccess)
+                return Ok(response);
 
-        //    return Ok(new
-        //    {
-        //        Token = token,
-        //        User = new { user.Id, user.UserName, user.Email }
-        //    });
-        //}
+            return BadRequest(response);
+        }
+        [HttpPost("create-role")]
+        public async Task<IActionResult> CreateRole([FromBody] CreateRoleCommand command)
+        {
+            var result = await Sender.Send(command);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpPost("add-role")]
+        public async Task<IActionResult> AddRoleToUser([FromBody] AddRoleToUserCommand command)
+        {
+            var result = await Sender.Send(command);
+            return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
 
 
 

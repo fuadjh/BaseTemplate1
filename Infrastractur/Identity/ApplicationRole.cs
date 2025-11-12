@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Identity
 {
-    public class ApplicationUser : IdentityUser<int>
+    public class ApplicationRole : IdentityRole<int>
     {
-        
+        public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
     }
 }
