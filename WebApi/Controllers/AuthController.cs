@@ -2,9 +2,11 @@
 using Common.Requests;
 using Common.RequestsDto;
 using Common.Wrapper;
+using Infrastructure.Authorization;
 using Infrastructure.Identity;
 using Infrastructure.Services;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Controllers;
@@ -21,6 +23,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("register")]
+       
         public async Task<IActionResult> Register([FromBody] RegisterUserRequest command)
         {
             if (!ModelState.IsValid)
@@ -55,10 +58,18 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("add-role")]
+
         public async Task<IActionResult> AddRoleToUser([FromBody] AddRoleToUserCommand command)
         {
             var result = await Sender.Send(command);
             return result.IsSuccess ? Ok(result) : BadRequest(result);
+        }
+
+        [HttpPost("test")]
+        [PermissionAuthorize("Delete")]
+        public IActionResult DeleteStudent(int id)
+        {
+            return Ok("Deleted");
         }
 
 

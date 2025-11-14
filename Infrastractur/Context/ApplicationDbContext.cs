@@ -21,6 +21,8 @@ namespace Infrastructure.Context
 
         {
         }
+
+
         public DbSet<ApplicationPermission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
 
@@ -35,9 +37,9 @@ namespace Infrastructure.Context
         .HasKey(rp => new { rp.RoleId, rp.PermissionId }); // تعریف کلید مرکب
 
             builder.Entity<ApplicationPermission>().HasData(
-                new ApplicationPermission { Id = 1, Name = "Create" },
-                new ApplicationPermission { Id = 2, Name = "Edit" },
-                new ApplicationPermission { Id = 3, Name = "Delete" }
+                new ApplicationPermission { Id = 1, Name = "Create", DisplayName= "Create" },
+                new ApplicationPermission { Id = 2, Name = "Edit" , DisplayName = "Edit" },
+                new ApplicationPermission { Id = 3, Name = "Delete", DisplayName= "Delete" }
             );
 
 

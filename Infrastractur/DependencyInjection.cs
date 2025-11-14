@@ -1,8 +1,10 @@
 ﻿using Application.Interfaces;
+using Infrastructure.Authorization;
 using Infrastructure.Context;
 using Infrastructure.Identity;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -58,6 +60,10 @@ namespace Infrastructure
 
             // ✅ Authorization policies (بعداً می‌توان اضافه کرد)
             services.AddAuthorization();
+            services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
+            services.AddSingleton<IAuthorizationPolicyProvider, CustomPolicyProvider>();
+            services.AddSingleton<IAuthorizationPolicyProvider, DynamicAuthorizationPolicyProvider>();
+
 
             // ✅ JWT Token Service
             services.AddScoped<IJwtTokenService, JwtTokenService>();
