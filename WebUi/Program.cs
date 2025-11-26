@@ -1,7 +1,10 @@
-﻿using WebUi.Components;
+﻿using Blazored.SessionStorage;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
+using WebUi.Components;
 using WebUi.Components.Pages.Auth;
-using WebUi.Components.Pages.Auth.WebUI.Client.Auth;
+
+//using WebUi.Components.Pages.Auth.WebUI.Client.Auth;
 
 namespace WebUi
 {
@@ -15,12 +18,22 @@ namespace WebUi
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
             //===============================================
-
+            builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        // تنظیمات کوکی (اختیاری):
+        options.LoginPath = "/"; // مسیری که Blazor به آن هدایت می کند اگر کاربر احراز هویت نشده باشد.
+        options.LogoutPath = "/logout";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // مدت زمان اعتبار کوکی
+        options.SlidingExpiration = true; // با هر درخواست، زمان اعتبار کوکی تمدید می شود.
+        // سایر تنظیمات...
+    });
             // برای احراز هویت
             builder.Services.AddCascadingAuthenticationState();
             builder.Services.AddScoped<AuthenticationStateProvider, CustomServerAuthenticationStateProvider>(); // تغییر این خط
             builder.Services.AddAuthorization(); // اطمینان از افزودن Authorization
-
+            builder.Services.AddBlazoredSessionStorage();
+            builder.Services.AddDistributedMemoryCache();
             // برای ارتباط با WebAPI
             builder.Services.AddHttpClient("WebApi", client =>
             {

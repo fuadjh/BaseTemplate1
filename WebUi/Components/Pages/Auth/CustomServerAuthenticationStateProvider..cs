@@ -1,115 +1,180 @@
-﻿using static System.Net.Mime.MediaTypeNames;
+﻿    using Blazored.SessionStorage; // حتماً این using را اضافه کنید
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
+    using Microsoft.AspNetCore.Http; // حتماً این using را اضافه کنید
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
-namespace WebUi.Components.Pages.Auth
+    // فرض بر این است که IHttpContextAccessor و ISessionStorageService تزریق شده‌اند
+    namespace WebUi.Components.Pages.Auth
 {
-    using Application.Authentication.Commands.LoginUser; // برای AuthenticationResult
-    using Microsoft.AspNetCore.Authentication;
-    using Microsoft.AspNetCore.Components.Authorization;
-    using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-    using Microsoft.AspNetCore.Http; // برای دسترسی به HttpContext
-    using System.Collections.Generic;
-    using System.IdentityModel.Tokens.Jwt; // برای خواندن JWT
-    using System.Net.Http.Headers;
-    using System.Security.Claims;
-
-    namespace WebUI.Client.Auth
+    public class CustomServerAuthenticationStateProvider : AuthenticationStateProvider
     {
-        public class CustomServerAuthenticationStateProvider : AuthenticationStateProvider
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ISessionStorageService _sessionStorage;
+        private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
+        private readonly IConfiguration _configuration; // برای خواندن Secret Key
+
+        // برای نگهداری وضعیت احراز هویت فعلی
+        private ClaimsPrincipal _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+
+        public CustomServerAuthenticationStateProvider(
+            IHttpContextAccessor httpContextAccessor,
+            ISessionStorageService sessionStorage,
+            IConfiguration configuration)
         {
-            private readonly IHttpContextAccessor _httpContextAccessor;
-            private readonly IHttpClientFactory _httpClientFactory;
-            private readonly ProtectedSessionStorage _sessionStorage; // یا ProtectedLocalStorage
+            _httpContextAccessor = httpContextAccessor;
+            _sessionStorage = sessionStorage;
+            _jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+            _configuration = configuration;
+        }
 
-            public CustomServerAuthenticationStateProvider(
-                IHttpContextAccessor httpContextAccessor,
-                IHttpClientFactory httpClientFactory,
-                ProtectedSessionStorage sessionStorage) // یا ProtectedLocalStorage
+        // متد اصلی برای دریافت وضعیت احراز هویت
+        // نوع بازگشتی باید Task<AuthenticationState> باشد
+        public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+        {
+            // 1. ابتدا بررسی می‌کنیم که آیا کاربر از طریق کوکی (سشن ASP.NET Core) احراز هویت شده است یا خیر.
+            // این حالت بعد از اولین لاگین موفق با JWT و صدور کوکی اتفاق می‌افتد.
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext?.User.Identity?.IsAuthenticated == true)
             {
-                _httpContextAccessor = httpContextAccessor;
-                _httpClientFactory = httpClientFactory;
-                _sessionStorage = sessionStorage;
+                _currentUser = httpContext.User;
+                return new AuthenticationState(_currentUser);
             }
 
-            public override async Task GetAuthenticationStateAsync()
+            // 2. اگر کاربر از طریق کوکی احراز هویت نشده، تلاش می‌کنیم توکن JWT را از SessionStorage بخوانیم.
+            string jwtToken = await _sessionStorage.GetItemAsync<string>("jwtToken");
+
+            if (!string.IsNullOrEmpty(jwtToken))
             {
-                var httpContext = _httpContextAccessor.HttpContext;
-                if (httpContext?.User.Identity?.IsAuthenticated == true)
+                try
                 {
-                    // کاربر از طریق کوکی احراز هویت شده است (مثلا بعد از ورود موفق)
-                    return new AuthenticationState(httpContext.User);
-                }
+                    // توکن را اعتبارسنجی و ClaimsPrincipal را ایجاد کنید
+                    _currentUser = CreateClaimsPrincipalFromJwt(jwtToken);
 
-                // اگر کاربر احراز هویت نشده، تلاش می‌کنیم ببینیم توکن JWT در سشن ذخیره شده؟
-                var result = await _sessionStorage.GetAsync("jwtToken");
-                if (result.Success && !string.IsNullOrEmpty(result.Value?.ToString()))
+                    // اگر توکن منقضی شده باشد یا نامعتبر باشد، CreateClaimsPrincipalFromJwt ممکن است یک ClaimsIdentity خالی برگرداند
+                    if (_currentUser.Identity?.IsAuthenticated == true)
+                    {
+                        // اگر توکن معتبر بود، یک کوکی احراز هویت برای Blazor Server صادر کنید
+                        await SignInUserWithCookie(_currentUser);
+                        return new AuthenticationState(_currentUser);
+                    }
+                }
+                catch (Exception ex)
                 {
-                    var jwtToken = result.Value.ToString();
-                    var principal = CreateClaimsPrincipalFromJwt(jwtToken);
-                    return new AuthenticationState(principal);
+                    // در صورت بروز خطا (مثلاً توکن نامعتبر)، آن را لاگ کنید و ادامه دهید
+                    Console.WriteLine($"Error validating JWT from SessionStorage: {ex.Message}");
+                    // توکن نامعتبر را حذف کنید
+                    await _sessionStorage.RemoveItemAsync("jwtToken");
                 }
-
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
-            public async Task MarkUserAsAuthenticated(AuthenticationResult authResult)
+            // اگر هیچ یک از روش‌های بالا موفق نبود، کاربر احراز هویت نشده است.
+            _currentUser = new ClaimsPrincipal(new ClaimsIdentity());
+            return new AuthenticationState(_currentUser);
+        }
+
+        // متد برای علامت‌گذاری کاربر به عنوان احراز هویت شده پس از لاگین موفق
+        public async Task MarkUserAsAuthenticated(string jwtToken)
+        {
+            // 1. ClaimsPrincipal را از JWT ایجاد کنید
+            var authenticatedUser = CreateClaimsPrincipalFromJwt(jwtToken);
+
+            // 2. یک کوکی احراز هویت برای Blazor Server صادر کنید
+            // این باعث می‌شود که در درخواست‌های بعدی به Blazor Server، HttpContext.User پر شود.
+            await SignInUserWithCookie(authenticatedUser);
+
+            // 3. به Blazor اطلاع دهید که وضعیت احراز هویت تغییر کرده است
+            // این باعث رفرش UI می‌شود (مثلاً نمایش لینک‌های لاگین/لاگ‌اوت)
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(authenticatedUser)));
+        }
+
+        // متد برای علامت‌گذاری کاربر به عنوان لاگ‌اوت شده
+        public async Task MarkUserAsLoggedOut()
+        {
+            // 1. کوکی احراز هویت را حذف کنید
+            await SignOutUserFromCookie();
+            // 2. JWT را از SessionStorage حذف کنید
+            await _sessionStorage.RemoveItemAsync("jwtToken");
+
+            // 3. وضعیت کاربر را به "احراز هویت نشده" تغییر دهید
+            var anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
+            _currentUser = anonymousUser;
+
+            // 4. به Blazor اطلاع دهید که وضعیت احراز هویت تغییر کرده است
+            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(anonymousUser)));
+        }
+
+        // متد کمکی برای ایجاد ClaimsPrincipal از JWT
+        private ClaimsPrincipal CreateClaimsPrincipalFromJwt(string jwtToken)
+        {
+            // Secret Key را از تنظیمات (appsettings.json) بخوانید
+            var secretKey = _configuration["JwtSettings:Secret"];
+            if (string.IsNullOrEmpty(secretKey))
             {
-                var principal = CreateClaimsPrincipalFromJwt(authResult.Token);
+                throw new InvalidOperationException("JWT Secret Key is not configured.");
+            }
+            var key = Encoding.ASCII.GetBytes(secretKey);
 
-                // ایجاد کوکی احراز هویت برای ASP.NET Core
-                var authProperties = new AuthenticationProperties
-                {
-                    IsPersistent = true, // به یاد داشتن کاربر
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1) // مثلاً اعتبار کوکی
-                };
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false, // بسته به تنظیمات API شما
+                ValidateAudience = false, // بسته به تنظیمات API شما
+                ValidateLifetime = true, // مطمئن شوید که توکن منقضی نشده باشد
+                ClockSkew = TimeSpan.Zero // عدم تحمل خطا در زمان انقضا
+            };
 
-                await _httpContextAccessor.HttpContext!.SignInAsync(
-                    "Cookies", // Scheme name (همان که در Program.cs برای AddAuthentication("Cookies") استفاده شده)
+            try
+            {
+                // اعتبارسنجی توکن و استخراج Claims
+                var principal = _jwtSecurityTokenHandler.ValidateToken(jwtToken, validationParameters, out var validatedToken);
+                return principal;
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                // توکن منقضی شده است
+                Console.WriteLine("JWT Token has expired.");
+                return new ClaimsPrincipal(new ClaimsIdentity()); // برگرداندن کاربر ناشناس
+            }
+            catch (Exception ex)
+            {
+                // خطای اعتبارسنجی عمومی
+                Console.WriteLine($"JWT Token validation failed: {ex.Message}");
+                return new ClaimsPrincipal(new ClaimsIdentity()); // برگرداندن کاربر ناشناس
+            }
+        }
+
+        // متد کمکی برای صدور کوکی احراز هویت ASP.NET Core
+        private async Task SignInUserWithCookie(ClaimsPrincipal principal)
+        {
+            if (_httpContextAccessor.HttpContext != null)
+            {
+                await _httpContextAccessor.HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
                     principal,
-                    authProperties);
-
-                // ذخیره JWT در سشن برای استفاده در HttpClient (برای تماس با WebApi)
-                await _sessionStorage.SetAsync("jwtToken", authResult.Token);
-
-                NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(principal)));
-            }
-
-            public async Task MarkUserAsLoggedOut()
-            {
-                await _httpContextAccessor.HttpContext!.SignOutAsync("Cookies"); // Scheme name
-                await _sessionStorage.DeleteAsync("jwtToken");
-                NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()))));
-            }
-
-            // یک متد کمکی برای ساخت ClaimsPrincipal از JWT
-            private ClaimsPrincipal CreateClaimsPrincipalFromJwt(string jwtToken)
-            {
-                var handler = new JwtSecurityTokenHandler();
-                var token = handler.ReadJwtToken(jwtToken);
-
-                var claims = new List(token.Claims);
-                // اضافه کردن Claim برای نام کاربری (Sub یا Name) اگر وجود نداشته باشد
-                if (!claims.Any(c => c.Type == ClaimTypes.Name))
-                {
-                    var nameClaim = token.Claims.FirstOrDefault(c => c.Type == "sub" || c.Type == "name");
-                    if (nameClaim != null)
+                    new AuthenticationProperties
                     {
-                        claims.Add(new Claim(ClaimTypes.Name, nameClaim.Value));
-                    }
-                }
-                // اضافه کردن Claim برای نام کاربری (Sub یا NameIdentifier) اگر وجود نداشته باشد
-                if (!claims.Any(c => c.Type == ClaimTypes.NameIdentifier))
-                {
-                    var nameIdentifierClaim = token.Claims.FirstOrDefault(c => c.Type == "sub");
-                    if (nameIdentifierClaim != null)
-                    {
-                        claims.Add(new Claim(ClaimTypes.NameIdentifier, nameIdentifierClaim.Value));
-                    }
-                }
+                        IsPersistent = true, // برای ماندگاری سشن پس از بستن مرورگر
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(60) // مدت اعتبار کوکی (مثلا ۱ ساعت)
+                    });
+            }
+        }
 
-
-                var identity = new ClaimsIdentity(claims, "jwt"); // "jwt" می تواند نام Scheme باشد
-                return new ClaimsPrincipal(identity);
+        // متد کمکی برای حذف کوکی احراز هویت ASP.NET Core
+        private async Task SignOutUserFromCookie()
+        {
+            if (_httpContextAccessor.HttpContext != null)
+            {
+                await _httpContextAccessor.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             }
         }
     }
+
 }
