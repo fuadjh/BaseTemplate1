@@ -9,105 +9,94 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Net.Http.Json
 @using Blazored.SessionStorage
-@inject HttpClient HttpClient
+
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager
 @inject ISessionStorageService SessionStorage // برای ذخیره JWT
 
-<h3>ورود به حساب کاربری</h3>
 
-<EditForm Model="@loginRequest" OnValidSubmit="HandleLogin"  FormName="LoginForm">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<div class="login-container">
+    <h2>ورود به حساب کاربری</h2>
 
-    
-        
-        <label for="email">ایمیل:</label>
-        <InputText id="email" @bind-Value="loginRequest.Email" class="form-control" />
-    
+    <EditForm Model="@loginRequest" OnValidSubmit="HandleLogin">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-    
-        
-        <label for="password">رمز عبور:</label>
-        <InputText id="password" @bind-Value="loginRequest.Password" type="password" class="form-control" />
-    
+        <div class="form-group">
+            <label for="email">ایمیل:</label>
+            <InputText id="email" @bind-Value="loginRequest.Email" class="form-control" />
+        </div>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        
-            @errorMessage
-        
-    }
+        <div class="form-group">
+            <label for="password">رمز عبور:</label>
+            <InputText id="password" type="password" @bind-Value="loginRequest.Password" class="form-control" />
+        </div>
 
-    
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">
+                @errorMessage
+            </div>
+        }
+
         <button type="submit" class="btn btn-primary">ورود</button>
-    
-</EditForm>
+    </EditForm>
+</div>
+
 
 @code {
     private LoginRequest loginRequest = new LoginRequest();
     private string errorMessage = string.Empty;
 
-    // HttpClient را از طریق Name factory که در Program.cs تعریف کردید تزریق کنید
     [Inject]
-    public IHttpClientFactory HttpClientFactory { get; set; }
+    public IHttpClientFactory HttpClientFactory { get; set; } // IHttpClientFactory را تزریق کنید
+    // HttpClient را از طریق Name factory که در Program.cs تعریف کردید تزریق کنید
+    // اگر CustomServerAuthenticationStateProvider در همان پروژه WebUi است
+    // باید آن را نیز @inject کنید یا مطمئن شوید که به HttpClient دسترسی دارد.
+    // @inject AuthenticationStateProvider AuthenticationStateProvider (این قبلاً در بالا هست و درست است)
 
-    protected override void OnInitialized()
-    {
-        // در صورت نیاز، HttpClient را اینجا دریافت کنید
-        HttpClient = HttpClientFactory.CreateClient("ApiHttpClient");
-    }
 
     private async Task HandleLogin()
     {
-        errorMessage = string.Empty;
+        errorMessage = string.Empty; // هر بار خطا را پاک کنید
 
         try
         {
-            var response = await HttpClient.PostAsJsonAsync("api/auth/login", loginRequest);
+            // از HttpClientFactory برای ایجاد یک HttpClient نام‌گذاری شده استفاده کنید
+            // "WebApiClient" نامی است که در Program.cs تعریف خواهیم کرد.
+            var httpClient = HttpClientFactory.CreateClient("WebApi");
+
+            var response = await httpClient.PostAsJsonAsync("api/Auth/login", loginRequest);
 
             if (response.IsSuccessStatusCode)
             {
-                var authUser = await response.Content.ReadFromJsonAsync<AuthenticationResult>();
-
-                if (authUser != null && authUser.IsSuccess)
+                var result = await response.Content.ReadFromJsonAsync<AuthenticationResult>();
+                if (result != null && !string.IsNullOrEmpty(result.Token))
                 {
-                    // 1. JWT را در SessionStorage ذخیره کنید
-                    await SessionStorage.SetItemAsync("jwtToken", authUser.Token);
-
-                    // 2. CustomServerAuthenticationStateProvider را از وضعیت جدید مطلع کنید
-                    var customAuthStateProvider = (CustomServerAuthenticationStateProvider)AuthenticationStateProvider;
-                    await customAuthStateProvider.MarkUserAsAuthenticated(authUser.Token);
-
-                    // 3. کاربر را به صفحه اصلی یا هر صفحه مورد نظر دیگر هدایت کنید
-                    NavigationManager.NavigateTo("/", forceLoad: true); // forceLoad برای اطمینان از تازه‌سازی کامل Blazor context
+                    await SessionStorage.SetItemAsync("authToken", result.Token);
+                    // به CustomServerAuthenticationStateProvider اطلاع دهید که وضعیت احراز هویت تغییر کرده است
+                    await ((CustomServerAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(result.Token);
+                    NavigationManager.NavigateTo("/"); // به صفحه اصلی هدایت شود
                 }
                 else
                 {
-                    // خطا در اعتبار سنجی سمت سرور (مثلا رمز عبور اشتباه)
-                    errorMessage = string.Join("\n", authUser?.Errors ?? new List<string> { "خطای نامشخص در احراز هویت." });
+                    errorMessage = "پاسخ API معتبر نبود.";
                 }
-            }
-            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized || response.StatusCode == System.Net.HttpStatusCode.BadRequest)
-            {
-                // این می‌تواند نشان دهنده اعتبارنامه نامعتبر باشد
-                var errorContent = await response.Content.ReadAsStringAsync();
-                errorMessage = $"نام کاربری یا رمز عبور اشتباه است. جزئیات: {errorContent}";
             }
             else
             {
-                errorMessage = $"خطا در اتصال به سرور: {response.ReasonPhrase}";
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = $"خطا در ورود: {response.ReasonPhrase} - {errorContent}";
+                // می‌توانید جزئیات خطای بیشتر را از errorContent استخراج کنید
             }
         }
         catch (HttpRequestException httpEx)
         {
-            errorMessage = $"خطا در اتصال به API: {httpEx.Message}. آیا WebAPI در حال اجراست و پورت درست است؟";
-            Console.WriteLine($"HttpRequestException: {httpEx.Message}");
+            errorMessage = $"خطای ارتباط با سرور: {httpEx.Message}. مطمئن شوید WebAPI در حال اجرا است.";
         }
         catch (Exception ex)
         {
-            errorMessage = $"خطایی رخ داد: {ex.Message}";
-            Console.WriteLine($"Exception: {ex.Message}");
+            errorMessage = $"خطای غیرمنتظره: {ex.Message}";
         }
     }
 }
