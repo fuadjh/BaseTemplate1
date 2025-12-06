@@ -1,4 +1,5 @@
 ﻿using Common.RequestsDto;
+using Common.ResponsesDto;
 using Common.Wrapper;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace Application.Interfaces
     public interface IIdentityService
     {
         Task<ResponseWrapper<string>> RegisterAsync(RegisterUserRequest registerUserCommand);
-        Task<ResponseWrapper<string>> LoginAsync(LoginRequest loginRequest);
+        Task<ResponseWrapper<AuthenticationResult>> LoginAsync(LoginRequest loginRequest);
         Task<ResponseWrapper<string>> AddRoleToUserAsync(string email, string roleName);
         Task<ResponseWrapper<string>> CreateRoleAsync(string roleName);
     }

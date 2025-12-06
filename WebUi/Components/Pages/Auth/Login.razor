@@ -1,9 +1,10 @@
 ﻿@page "/login"
-
+@rendermode InteractiveServer
 
 @using Common
 @using Common.RequestsDto
 @using Common.ResponsesDto
+@using Common.Wrapper
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Forms
@@ -18,7 +19,7 @@
 <div class="login-container">
     <h2>ورود به حساب کاربری</h2>
 
-    <EditForm Model="@loginRequest" OnValidSubmit="HandleLogin">
+    <EditForm Model="@loginRequest" OnValidSubmit="HandleLogin" FormName="LoginForm">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
@@ -70,12 +71,12 @@
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<AuthenticationResult>();
-                if (result != null && !string.IsNullOrEmpty(result.Token))
+                var result = await response.Content.ReadFromJsonAsync<ResponseWrapper<AuthenticationResult>>();
+                if (result != null && !string.IsNullOrEmpty(result.Data.Token))
                 {
-                    await SessionStorage.SetItemAsync("authToken", result.Token);
+                    await SessionStorage.SetItemAsync("authToken", result.Data.Token);
                     // به CustomServerAuthenticationStateProvider اطلاع دهید که وضعیت احراز هویت تغییر کرده است
-                    await ((CustomServerAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(result.Token);
+                    await ((CustomServerAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(result.Data.Token);
                     NavigationManager.NavigateTo("/"); // به صفحه اصلی هدایت شود
                 }
                 else

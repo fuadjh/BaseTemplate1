@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Common.RequestsDto;
+using Common.ResponsesDto;
 using Common.Wrapper;
 using MediatR;
 using System;
@@ -10,14 +11,14 @@ using System.Threading.Tasks;
 
 namespace Application.Features.Identity.Command
 {
-    public class LoginUserCommand : IRequest<ResponseWrapper<string>>
+    public class LoginUserCommand : IRequest<ResponseWrapper<AuthenticationResult>>
     {
         public LoginRequest loginRequest { get; set; }
     }
 
 
 
-    public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, ResponseWrapper<string>>
+    public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, ResponseWrapper<AuthenticationResult>>
     {
         private readonly IIdentityService _identityService;
 
@@ -26,11 +27,12 @@ namespace Application.Features.Identity.Command
             _identityService = identityService;
         }
 
-        public async Task<ResponseWrapper<string>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
+        public async Task<ResponseWrapper<AuthenticationResult>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
         {
             var result = await _identityService.LoginAsync(request.loginRequest);
 
             return result;
+
         }
     }
 }

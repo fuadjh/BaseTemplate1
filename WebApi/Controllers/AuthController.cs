@@ -23,33 +23,21 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("register")]
-       
         public async Task<IActionResult> Register([FromBody] RegisterUserRequest command)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(new ResponseWrapper<string>().Failed("Invalid request data."));
+     => await Sender.Send(new RegisterUserCommand { registerUserRequest = command })
+           is var response && response.IsSuccess
+            ? Ok(response)
+            : BadRequest(response);
 
-            var response = await Sender.Send(new RegisterUserCommand {registerUserRequest =command });
-
-            if (response.IsSuccess)
-                return Ok(response);
-
-            return BadRequest(response);
-        }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(new ResponseWrapper<string>().Failed("Invalid request data."));
+        => await Sender.Send(new LoginUserCommand { loginRequest = request })
+                       is var response && response.IsSuccess
+            ? Ok(response)
+            : BadRequest(response);
 
-            var response = await Sender.Send(new LoginUserCommand { loginRequest=request});
 
-            if (response.IsSuccess)
-                return Ok(response);
-
-            return BadRequest(response);
-        }
         [HttpPost("create-role")]
         public async Task<IActionResult> CreateRole([FromBody] CreateRoleCommand command)
         {

@@ -9,22 +9,27 @@ namespace Common.Wrapper
     public class ResponseWrapper<T>
     {
         public bool IsSuccess { get; set; }
-        public List<string> Massages { get; set; }
-        public T Data { get; set; }
-        public ResponseWrapper<T> Success (T data , string massage=null)
+        public List<string> Messages { get; set; } = new();
+        public T? Data { get; set; }
+
+        public static ResponseWrapper<T> Success(T data, string? message = null)
         {
-            IsSuccess = true;
-            Massages = [massage];
-                Data = data;
-            return this;
+            return new ResponseWrapper<T>
+            {
+                IsSuccess = true,
+                Data = data,
+                Messages = message != null ? new List<string> { message } : new()
+            };
         }
 
-        public ResponseWrapper<T> Failed( string massage )
+        public static ResponseWrapper<T> Failed(string message)
         {
-            IsSuccess = false;
-            Massages = [massage];
-           
-            return this;
+            return new ResponseWrapper<T>
+            {
+                IsSuccess = false,
+                Data = default,
+                Messages = new List<string> { message }
+            };
         }
     }
 }

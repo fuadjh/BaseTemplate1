@@ -1,6 +1,7 @@
 ﻿using Application.Features.Identity.Command;
 using Application.Interfaces;
 using Common.RequestsDto;
+using Common.ResponsesDto;
 using Common.Wrapper;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -35,7 +36,7 @@ namespace Infrastructure.Services
         {
             var existingUser = await _userManager.FindByEmailAsync(command.email);
             if (existingUser != null)
-                return new ResponseWrapper<string>().Failed("User with this email already exists.");
+                return ResponseWrapper<string>.Failed("User with this email already exists.");
 
             var user = new ApplicationUser
             {
@@ -47,52 +48,62 @@ namespace Infrastructure.Services
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return new ResponseWrapper<string>().Failed(errors);
+                return  ResponseWrapper<string>.Failed(errors);
             }
 
             var token = await _jwtTokenService.GenerateTokenAsync(user);
-            return new ResponseWrapper<string>().Success(token, "User registered successfully");
+            return ResponseWrapper<string>.Success(token, "User registered successfully");
         }
 
         public async Task<ResponseWrapper<string>> CreateRoleAsync(string roleName)
         {
             if (await _roleManager.RoleExistsAsync(roleName))
-                return new ResponseWrapper<string>().Failed("Role already exists.");
+                return  ResponseWrapper<string>.Failed("Role already exists.");
 
             var result = await _roleManager.CreateAsync(new ApplicationRole { Name = roleName });
 
             return result.Succeeded
-                ? new ResponseWrapper<string>().Success(roleName, "Role created successfully.")
-                :new ResponseWrapper<string>().Failed("Role creation failed.");
+                ?  ResponseWrapper<string>.Success(roleName, "Role created successfully.")
+                :ResponseWrapper<string>.Failed("Role creation failed.");
         }
 
         public async Task<ResponseWrapper<string>> AddRoleToUserAsync(string email, string roleName)
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
-                return new ResponseWrapper<string>().Failed("User not found.");
+                return  ResponseWrapper<string>.Failed("User not found.");
 
             if (!await _roleManager.RoleExistsAsync(roleName))
-                return new ResponseWrapper<string>().Failed("Role not found.");
+                return  ResponseWrapper<string>.Failed("Role not found.");
 
             var result = await _userManager.AddToRoleAsync(user, roleName);
             return result.Succeeded
-                ? new ResponseWrapper<string>().Success(roleName, "Role added successfully.")
-                : new ResponseWrapper<string>().Failed("Adding role failed.");
+                ?  ResponseWrapper<string>.Success(roleName, "Role added successfully.")
+                :  ResponseWrapper<string>.Failed("Adding role failed.");
         }
 
-        public async Task<ResponseWrapper<string>> LoginAsync(LoginRequest command)
+        public async Task<ResponseWrapper<AuthenticationResult>> LoginAsync(LoginRequest command)
         {
             var user = await _userManager.FindByEmailAsync(command.Email);
             if (user == null)
-                return new ResponseWrapper<string>().Failed("User not found");
+                return ResponseWrapper<AuthenticationResult>.Failed("کاربر یافت نشد");
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, command.Password, false);
-            if (!result.Succeeded)
-                return new ResponseWrapper<string>().Failed("Invalid credentials");
+            var signInResult = await _signInManager.CheckPasswordSignInAsync(user, command.Password, lockoutOnFailure: false);
+            if (!signInResult.Succeeded)
+                return ResponseWrapper<AuthenticationResult>.Failed("ایمیل یا رمز عبور اشتباه است");
 
             var token = await _jwtTokenService.GenerateTokenAsync(user);
-            return new ResponseWrapper<string>().Success(token, "Login successful");
+
+            var authResult = new AuthenticationResult
+            {
+                Token = token,
+                // اگر بخوای اطلاعات بیشتر هم برگردونی:
+                // UserId = user.Id,
+                // UserName = user.UserName,
+                // ExpiresAt = DateTime.UtcNow.AddHours(1)
+            };
+
+            return ResponseWrapper<AuthenticationResult>.Success(authResult, "ورود با موفقیت انجام شد");
         }
 
     }
