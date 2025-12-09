@@ -113,58 +113,40 @@ using static System.Net.Mime.MediaTypeNames;
         // متد کمکی برای ایجاد ClaimsPrincipal از JWT
         private ClaimsPrincipal CreateClaimsPrincipalFromJwt(string jwtToken)
         {
-            // Secret Key را از تنظیمات (appsettings.json) بخوانید
-            var secretKey = _configuration["JwtSettings:Secret"];
-            if (string.IsNullOrEmpty(secretKey))
-            {
-                throw new InvalidOperationException("JWT Secret Key is not configured.");
-            }
-            var key = Encoding.ASCII.GetBytes(secretKey);
+            if (string.IsNullOrWhiteSpace(jwtToken))
+                return new ClaimsPrincipal(new ClaimsIdentity());
 
-            var validationParameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = false, // بسته به تنظیمات API شما
-                ValidateAudience = false, // بسته به تنظیمات API شما
-                ValidateLifetime = true, // مطمئن شوید که توکن منقضی نشده باشد
-                ClockSkew = TimeSpan.Zero // عدم تحمل خطا در زمان انقضا
-            };
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(jwtToken); // فقط خواندن توکن بدون validate امضاء
+            var claims = jwt.Claims.ToList();
 
-            try
-            {
-                // اعتبارسنجی توکن و استخراج Claims
-                var principal = _jwtSecurityTokenHandler.ValidateToken(jwtToken, validationParameters, out var validatedToken);
-                return principal;
-            }
-            catch (SecurityTokenExpiredException)
-            {
-                // توکن منقضی شده است
-                Console.WriteLine("JWT Token has expired.");
-                return new ClaimsPrincipal(new ClaimsIdentity()); // برگرداندن کاربر ناشناس
-            }
-            catch (Exception ex)
-            {
-                // خطای اعتبارسنجی عمومی
-                Console.WriteLine($"JWT Token validation failed: {ex.Message}");
-                return new ClaimsPrincipal(new ClaimsIdentity()); // برگرداندن کاربر ناشناس
-            }
+            // ممکن است بخواهید claimهایی مثل nameidentifier, name یا roles را تبدیل کنید
+            var identity = new ClaimsIdentity(claims, "jwt");
+            return new ClaimsPrincipal(identity);
         }
 
         // متد کمکی برای صدور کوکی احراز هویت ASP.NET Core
         private async Task SignInUserWithCookie(ClaimsPrincipal principal)
         {
-            if (_httpContextAccessor.HttpContext != null)
+            if (_httpContextAccessor.HttpContext == null) return;
+
+            var response = _httpContextAccessor.HttpContext.Response;
+            if (response.HasStarted)
             {
-                await _httpContextAccessor.HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    principal,
-                    new AuthenticationProperties
-                    {
-                        IsPersistent = true, // برای ماندگاری سشن پس از بستن مرورگر
-                        ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(60) // مدت اعتبار کوکی (مثلا ۱ ساعت)
-                    });
+                // پاسخ آغاز شده — نمی‌توان هدر ست کرد.
+                // گزینه: لاگ کردن و خروج (UI با ClaimsPrincipal به‌روز می‌شود ولی کوکی ایجاد نمی‌شود)
+                Console.WriteLine("Response already started — cannot set cookie here.");
+                return;
             }
+
+            await _httpContextAccessor.HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(60)
+                });
         }
 
         // متد کمکی برای حذف کوکی احراز هویت ASP.NET Core

@@ -56,39 +56,54 @@
     // باید آن را نیز @inject کنید یا مطمئن شوید که به HttpClient دسترسی دارد.
     // @inject AuthenticationStateProvider AuthenticationStateProvider (این قبلاً در بالا هست و درست است)
 
-
     private async Task HandleLogin()
     {
-        errorMessage = string.Empty; // هر بار خطا را پاک کنید
+        errorMessage = string.Empty;
 
         try
         {
-            // از HttpClientFactory برای ایجاد یک HttpClient نام‌گذاری شده استفاده کنید
-            // "WebApiClient" نامی است که در Program.cs تعریف خواهیم کرد.
             var httpClient = HttpClientFactory.CreateClient("WebApi");
-
             var response = await httpClient.PostAsJsonAsync("api/Auth/login", loginRequest);
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<ResponseWrapper<AuthenticationResult>>();
-                if (result != null && !string.IsNullOrEmpty(result.Data.Token))
+                var wrapper = await response.Content.ReadFromJsonAsync<ResponseWrapper<AuthenticationResult>>();
+
+                if (wrapper?.IsSuccess == true && wrapper.Data?.Token != null)
                 {
-                    await SessionStorage.SetItemAsync("authToken", result.Data.Token);
-                    // به CustomServerAuthenticationStateProvider اطلاع دهید که وضعیت احراز هویت تغییر کرده است
-                    await ((CustomServerAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(result.Data.Token);
-                    NavigationManager.NavigateTo("/"); // به صفحه اصلی هدایت شود
+                    await SessionStorage.SetItemAsync("authToken", wrapper.Data.Token);
+                    await ((CustomServerAuthenticationStateProvider)AuthenticationStateProvider)
+                        .MarkUserAsAuthenticated(wrapper.Data.Token);
+                    NavigationManager.NavigateTo("/");
+                    return;
                 }
-                else
-                {
-                    errorMessage = "پاسخ API معتبر نبود.";
-                }
+
+                // اگر IsSuccess = false بود (مثل رمز اشتباه)
+                errorMessage = wrapper?.Messages?.FirstOrDefault() ?? "خطا در ورود: پاسخ نامعتبر از سرور.";
             }
             else
             {
+                // اینجا خطاهای 400, 500 و غیره رو هندل می‌کنیم
                 var errorContent = await response.Content.ReadAsStringAsync();
-                errorMessage = $"خطا در ورود: {response.ReasonPhrase} - {errorContent}";
-                // می‌توانید جزئیات خطای بیشتر را از errorContent استخراج کنید
+
+                // سعی کن اگر JSON بود، جزئیات رو بخونی
+                try
+                {
+                    var errorWrapper = await response.Content.ReadFromJsonAsync<ResponseWrapper<object>>();
+                    if (errorWrapper?.Messages?.Any() == true)
+                    {
+                        errorMessage = string.Join(" ", errorWrapper.Messages);
+                    }
+                    else
+                    {
+                        errorMessage = $"خطای سرور ({(int)response.StatusCode}): {errorContent}";
+                    }
+                }
+                catch
+                {
+                    // اگر JSON نبود (مثل exception خام سرور)
+                    errorMessage = $"خطای سرور ({(int)response.StatusCode}): {errorContent.Trim()}";
+                }
             }
         }
         catch (HttpRequestException httpEx)
