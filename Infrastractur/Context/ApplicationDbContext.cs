@@ -1,5 +1,6 @@
 ﻿
-using Infrastructure.Identity;
+using Infrastructure.IdentityModels;
+
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

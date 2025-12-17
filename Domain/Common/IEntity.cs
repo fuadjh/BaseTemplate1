@@ -9,7 +9,7 @@ namespace Domain.Contracts
 
     public interface IEntity<TId> :IEntity
     {
-        TId Id { get; set; }
+        TId Id { get; }
     }
 
     public interface IEntity

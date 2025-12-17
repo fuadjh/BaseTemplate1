@@ -1,5 +1,5 @@
 ﻿using Infrastructure.Context;
-using Infrastructure.Identity;
+using Infrastructure.IdentityModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

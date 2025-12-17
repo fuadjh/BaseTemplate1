@@ -4,10 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Contracts
+namespace Common.Enums
 {
-    public abstract class BaseEntity<Tid> :IEntity<Tid>
+    public enum Gender
     {
-        public Tid Id { get; set; }
+        Unknown = 0,
+        Male = 1,
+        Female = 2
     }
+
 }
