@@ -1,9 +1,12 @@
 ﻿using Application.Features.Identity.Command;
 using Application.Interfaces;
 using Common.RequestsDto;
+using Common.RequestsDto.Users;
 using Common.ResponsesDto;
+using Common.ResponsesDto.Users;
 using Common.Wrapper;
-using Infrastructure.Identity;
+using Domain.Users;
+using Infrastructure.IdentityModels;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -19,6 +22,7 @@ namespace Infrastructure.Services
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IJwtTokenService _jwtTokenService;
+       
 
         public IdentityService(
             UserManager<ApplicationUser> userManager,
@@ -106,5 +110,32 @@ namespace Infrastructure.Services
             return ResponseWrapper<AuthenticationResult>.Success(authResult, "ورود با موفقیت انجام شد");
         }
 
+        public async Task<ResponseWrapper<CheckNationalCodeResult>> CheckNationalCodeAsync(CheckNationalCodeRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NationalCode))
+                return  ResponseWrapper<CheckNationalCodeResult>.Failed("کد ملی الزامی است");
+
+            // (در صورت نیاز: اعتبارسنجی الگوریتمی کد ملی)
+
+            var identityUser = await _userManager
+                .FindByNameAsync(request.NationalCode);
+
+            if (identityUser == null)
+            {
+                return ResponseWrapper<CheckNationalCodeResult>.Success(
+                    new CheckNationalCodeResult { Exists = false }
+                );
+            }
+
+         
+
+            return ResponseWrapper<CheckNationalCodeResult>.Success(
+                new CheckNationalCodeResult
+                {
+                    Exists = true,
+                    IdentityUserId = identityUser.Id
+                  
+                });
+        }
     }
 }

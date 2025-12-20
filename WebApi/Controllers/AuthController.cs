@@ -1,9 +1,11 @@
 ﻿using Application.Features.Identity.Command;
+using Application.Features.Identity.LmsUsers;
 using Common.Requests;
 using Common.RequestsDto;
+using Common.RequestsDto.Users;
 using Common.Wrapper;
 using Infrastructure.Authorization;
-using Infrastructure.Identity;
+using Infrastructure.IdentityModels;
 using Infrastructure.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -53,12 +55,13 @@ namespace WebAPI.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpPost("test")]
-        [PermissionAuthorize("Delete")]
-        public IActionResult DeleteStudent(int id)
-        {
-            return Ok("Deleted");
-        }
+        [HttpPost("check-national-code")]
+        public async Task<IActionResult> CheckNationalCode( [FromBody] CheckNationalCodeRequest request)
+     => await Sender.Send(new CheckNationalCodeCommand { Request = request })
+        is var response && response.IsSuccess
+            ? Ok(response)
+            : BadRequest(response);
+
 
 
 

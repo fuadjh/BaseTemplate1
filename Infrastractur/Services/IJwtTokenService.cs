@@ -1,4 +1,4 @@
-﻿using Infrastructure.Identity;
+﻿using Infrastructure.IdentityModels;
 
 namespace Infrastructure.Services
 {

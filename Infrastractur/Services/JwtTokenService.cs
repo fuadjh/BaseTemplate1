@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Infrastructure.Identity;
+using Infrastructure.IdentityModels;
 using Infrastructure.Context; // فرض بر این است که DbContext شما اینجاست
 using Microsoft.EntityFrameworkCore;
 
