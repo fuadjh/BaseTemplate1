@@ -1,5 +1,6 @@
 ﻿using Application.Features.Identity.Command;
-using Application.Features.Identity.LmsUsers;
+
+using Application.Features.LmsUsers.Command;
 using Common.Requests;
 using Common.RequestsDto;
 using Common.RequestsDto.Users;

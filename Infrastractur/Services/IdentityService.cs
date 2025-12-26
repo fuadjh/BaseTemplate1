@@ -5,6 +5,7 @@ using Common.RequestsDto.Users;
 using Common.ResponsesDto;
 using Common.ResponsesDto.Users;
 using Common.Wrapper;
+using Domain.Common.Exceptions;
 using Domain.Users;
 using Infrastructure.IdentityModels;
 using Microsoft.AspNetCore.Identity;
@@ -22,7 +23,7 @@ namespace Infrastructure.Services
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IJwtTokenService _jwtTokenService;
-       
+
 
         public IdentityService(
             UserManager<ApplicationUser> userManager,
@@ -52,7 +53,7 @@ namespace Infrastructure.Services
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return  ResponseWrapper<string>.Failed(errors);
+                return ResponseWrapper<string>.Failed(errors);
             }
 
             var token = await _jwtTokenService.GenerateTokenAsync(user);
@@ -62,39 +63,39 @@ namespace Infrastructure.Services
         public async Task<ResponseWrapper<string>> CreateRoleAsync(string roleName)
         {
             if (await _roleManager.RoleExistsAsync(roleName))
-                return  ResponseWrapper<string>.Failed("Role already exists.");
+                return ResponseWrapper<string>.Failed("Role already exists.");
 
             var result = await _roleManager.CreateAsync(new ApplicationRole { Name = roleName });
 
             return result.Succeeded
-                ?  ResponseWrapper<string>.Success(roleName, "Role created successfully.")
-                :ResponseWrapper<string>.Failed("Role creation failed.");
+                ? ResponseWrapper<string>.Success(roleName, "Role created successfully.")
+                : ResponseWrapper<string>.Failed("Role creation failed.");
         }
 
         public async Task<ResponseWrapper<string>> AddRoleToUserAsync(string email, string roleName)
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
-                return  ResponseWrapper<string>.Failed("User not found.");
+                return ResponseWrapper<string>.Failed("User not found.");
 
             if (!await _roleManager.RoleExistsAsync(roleName))
-                return  ResponseWrapper<string>.Failed("Role not found.");
+                return ResponseWrapper<string>.Failed("Role not found.");
 
             var result = await _userManager.AddToRoleAsync(user, roleName);
             return result.Succeeded
-                ?  ResponseWrapper<string>.Success(roleName, "Role added successfully.")
-                :  ResponseWrapper<string>.Failed("Adding role failed.");
+                ? ResponseWrapper<string>.Success(roleName, "Role added successfully.")
+                : ResponseWrapper<string>.Failed("Adding role failed.");
         }
 
-        public async Task<ResponseWrapper<AuthenticationResult>> LoginAsync(LoginRequest command)
+        public async Task<AuthenticationResult> LoginAsync(LoginRequest command)
         {
             var user = await _userManager.FindByEmailAsync(command.Email);
             if (user == null)
-                return ResponseWrapper<AuthenticationResult>.Failed("کاربر یافت نشد");
+                throw new DomainException("کاربر یافت نشد");
 
             var signInResult = await _signInManager.CheckPasswordSignInAsync(user, command.Password, lockoutOnFailure: false);
             if (!signInResult.Succeeded)
-                return ResponseWrapper<AuthenticationResult>.Failed("ایمیل یا رمز عبور اشتباه است");
+                throw new DomainException("ایمیل یا رمز عبور اشتباه است");
 
             var token = await _jwtTokenService.GenerateTokenAsync(user);
 
@@ -107,35 +108,32 @@ namespace Infrastructure.Services
                 // ExpiresAt = DateTime.UtcNow.AddHours(1)
             };
 
-            return ResponseWrapper<AuthenticationResult>.Success(authResult, "ورود با موفقیت انجام شد");
+            return authResult;
         }
 
-        public async Task<ResponseWrapper<CheckNationalCodeResult>> CheckNationalCodeAsync(CheckNationalCodeRequest request)
+        public async Task<CheckNationalCodeResult> CheckNationalCodeAsync(CheckNationalCodeRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.NationalCode))
-                return  ResponseWrapper<CheckNationalCodeResult>.Failed("کد ملی الزامی است");
+                throw new DomainException("کد ملی الزامی است");
 
-            // (در صورت نیاز: اعتبارسنجی الگوریتمی کد ملی)
+            if (!NationalCode.IsValid(request.NationalCode))
+                throw new DomainException("کد ملی نامعتبر است");
 
-            var identityUser = await _userManager
-                .FindByNameAsync(request.NationalCode);
+            var identityUser = await _userManager.FindByNameAsync(request.NationalCode);
 
             if (identityUser == null)
             {
-                return ResponseWrapper<CheckNationalCodeResult>.Success(
-                    new CheckNationalCodeResult { Exists = false }
-                );
+                return new CheckNationalCodeResult
+                {
+                    Exists = false
+                };
             }
 
-         
-
-            return ResponseWrapper<CheckNationalCodeResult>.Success(
-                new CheckNationalCodeResult
-                {
-                    Exists = true,
-                    IdentityUserId = identityUser.Id
-                  
-                });
+            return new CheckNationalCodeResult
+            {
+                Exists = true,
+                IdentityUserId = identityUser.Id
+            };
         }
     }
 }

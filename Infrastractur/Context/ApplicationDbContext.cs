@@ -1,4 +1,5 @@
 ﻿
+using Domain.Users;
 using Infrastructure.IdentityModels;
 
 using Microsoft.AspNetCore.Identity;
@@ -26,6 +27,7 @@ namespace Infrastructure.Context
 
         public DbSet<ApplicationPermission> Permissions { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<LmsUser> LmsUsers { get; set; }
 
         // public DbSet<AccountHolder> accountHolders => Set<AccountHolder>();
         // public DbSet<Account> accounts => Set<Account>();
