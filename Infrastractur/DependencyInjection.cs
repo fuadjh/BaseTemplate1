@@ -1,7 +1,10 @@
 ﻿using Application.Interfaces;
+using Application.Interfaces.Repositories;
 using Infrastructure.Authorization;
 using Infrastructure.Context;
 using Infrastructure.IdentityModels;
+using Infrastructure.Repositories;
+using Infrastructure.Repositories.LmsUsers;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -63,7 +66,8 @@ namespace Infrastructure
             services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
             services.AddSingleton<IAuthorizationPolicyProvider, CustomPolicyProvider>();
             services.AddSingleton<IAuthorizationPolicyProvider, DynamicAuthorizationPolicyProvider>();
-
+            services.AddScoped<ILmsUserRepository, LmsUserRepository>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // ✅ JWT Token Service
             services.AddScoped<IJwtTokenService, JwtTokenService>();

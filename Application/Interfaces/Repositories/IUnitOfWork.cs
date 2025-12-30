@@ -7,10 +7,9 @@ using System.Threading.Tasks;
 
 namespace Application.Interfaces.Repositories
 {
-    public interface IUnitOfWork<TId> :IDisposable
+    public interface IUnitOfWork
     {
-        IWriteRepositoryAsync<T,TId> WriteRepositoryFor<T>() where T : BaseEntity<TId>;
-        IReadRepositoryAsync<T, TId> ReadRepositoryFor<T>() where T : BaseEntity<TId>;
-        Task<int> CommitAsync(CancellationToken cancellationToken);
+        Task CommitAsync(CancellationToken cancellationToken = default);
     }
+
 }

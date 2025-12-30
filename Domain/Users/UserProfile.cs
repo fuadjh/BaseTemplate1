@@ -27,7 +27,7 @@ namespace Domain.Users
             string firstName,
             string lastName,
             string nationalCode,
-            Gender gender,
+           // Gender gender,
             DateOnly? birthDate = null,
             string? avatarUrl = null)
         {
@@ -43,7 +43,7 @@ namespace Domain.Users
             FirstName = firstName.Trim();
             LastName = lastName.Trim();
             NationalCode = nationalCode.Trim();
-            Gender = gender;
+            //Gender = gender;
             BirthDate = birthDate;
             AvatarUrl = avatarUrl;
         }

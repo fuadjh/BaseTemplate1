@@ -30,7 +30,8 @@ namespace Application.Features.LmsUsers.Command
             GetLmsUsersQuery query,
             CancellationToken cancellationToken)
         {
-            return await _identityService.CheckNationalCodeAsync(query.Request);
+            var result = _identityService.CheckNationalCodeAsync(query.Request);
+            return await ResponseWrapper<PagedResult<result>>.Success()
         }
     }
 

@@ -9,8 +9,11 @@ namespace Application.Interfaces.Repositories
 {
     public interface ILmsUserRepository
     {
-        Task<LmsUser?> GetByIdAsync(Guid id, CancellationToken ct);
-        Task<LmsUser?> GetByIdentityUserIdAsync(int identityUserId, CancellationToken ct);
-        Task AddAsync(LmsUser user, CancellationToken ct);
+        Task<LmsUser?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+        Task<LmsUser?> GetByIdentityUserIdAsync(Guid identityUserId, CancellationToken cancellationToken);
+
+        Task AddAsync(LmsUser user, CancellationToken cancellationToken);
     }
+
+
 }
