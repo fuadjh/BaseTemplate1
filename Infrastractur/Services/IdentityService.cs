@@ -135,5 +135,26 @@ namespace Infrastructure.Services
                 IdentityUserId = identityUser.Id
             };
         }
+
+        public async Task<Guid> GetOrCreateUserByNationalCodeAsync(string nationalCode)
+        {
+            var user = await _userManager.FindByNameAsync(nationalCode);
+
+            if (user != null)
+                return user.Id;
+
+            var newUser = new ApplicationUser
+            {
+                UserName = nationalCode,
+                Email = null
+            };
+
+            var result = await _userManager.CreateAsync(newUser, nationalCode);
+
+            if (!result.Succeeded)
+                throw new ApplicationException("Identity user creation failed");
+
+            return newUser.Id;
+        }
     }
 }

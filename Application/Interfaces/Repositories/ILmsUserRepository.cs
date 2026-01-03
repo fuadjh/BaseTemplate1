@@ -13,6 +13,8 @@ namespace Application.Interfaces.Repositories
         Task<LmsUser?> GetByIdentityUserIdAsync(Guid identityUserId, CancellationToken cancellationToken);
 
         Task AddAsync(LmsUser user, CancellationToken cancellationToken);
+        
+        Task UpdateAsync(LmsUser user, CancellationToken ct);
     }
 
 

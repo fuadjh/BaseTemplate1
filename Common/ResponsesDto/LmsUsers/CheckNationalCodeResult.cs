@@ -9,7 +9,7 @@ namespace Common.ResponsesDto.Users
     public class CheckNationalCodeResult
     {
         public bool Exists { get; set; }
-        public int? IdentityUserId { get; set; }
+        public Guid? IdentityUserId { get; set; }
 
       
     }

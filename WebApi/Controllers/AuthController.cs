@@ -1,5 +1,5 @@
 ﻿using Application.Features.Identity.Command;
-
+using Application.Features.Identity.Command.AddRoleToUser;
 using Application.Features.LmsUsers.Command;
 using Common.Requests;
 using Common.RequestsDto;
@@ -24,7 +24,7 @@ namespace WebAPI.Controllers
         public AuthController(ISender sender) : base(sender)
         {
         }
-
+//-----------------------------------------------------------------
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserRequest command)
      => await Sender.Send(new RegisterUserCommand { registerUserRequest = command })
@@ -56,12 +56,7 @@ namespace WebAPI.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-        [HttpPost("check-national-code")]
-        public async Task<IActionResult> CheckNationalCode( [FromBody] CheckNationalCodeRequest request)
-     => await Sender.Send(new CheckNationalCodeCommand { Request = request })
-        is var response && response.IsSuccess
-            ? Ok(response)
-            : BadRequest(response);
+    
 
 
 

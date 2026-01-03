@@ -16,7 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Features\Identity\Dtos\" />
     <Folder Include="Features\Identity\Queries\" />
+    <Folder Include="Features\LmsUsers\Command\CreateUser\" />
+    <Folder Include="Features\LmsUsers\Dtos\" />
   </ItemGroup>
 
 </Project>

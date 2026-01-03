@@ -7,10 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Features.Identity.Command
+namespace Application.Features.Identity.Command.AddRoleToUser
 {
-    public record AddRoleToUserCommand(string Email, string RoleName) : IRequest<ResponseWrapper<string>>;
-
     public class AddRoleToUserCommandHandler : IRequestHandler<AddRoleToUserCommand, ResponseWrapper<string>>
     {
         private readonly IIdentityService _identityService;

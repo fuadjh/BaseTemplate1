@@ -19,6 +19,7 @@ namespace Application.Interfaces
         Task<AuthenticationResult> LoginAsync(LoginRequest loginRequest);
         Task<ResponseWrapper<string>> AddRoleToUserAsync(string email, string roleName);
         Task<ResponseWrapper<string>> CreateRoleAsync(string roleName);
+        Task<Guid> GetOrCreateUserByNationalCodeAsync(string nationalCode);
     }
 }
 

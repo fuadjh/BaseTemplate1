@@ -9,6 +9,7 @@ namespace Common.RequestsDto.Users
     public class CheckNationalCodeRequest
     {
         public string NationalCode { get; set; } = default!;
+       public bool IsIranian { get; set; }
     }
 
 }

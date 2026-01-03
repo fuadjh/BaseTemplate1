@@ -1,6 +1,7 @@
 ﻿using Application.Features.Identity.Command;
 using Application.Features.LmsUsers.Command;
 using Common.RequestsDto;
+using Common.RequestsDto.Users;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,11 +16,19 @@ namespace WebApi.Controllers
         {
         }
 
-        [HttpGet("get-lms-users")]
-        public async Task<IActionResult> GetLmsUsers(int pageNumber = 1,   int pageSize = 10)
-     => await Sender.Send(new GetLmsUsersQuery(pageNumber, pageSize))
-           is var response && response.IsSuccess
-            ? Ok(response)
-            : BadRequest(response);
+        [HttpPost("check-national-code")]
+        public async Task<IActionResult> CheckNationalCode([FromBody] CheckNationalCodeRequest request)
+ => await Sender.Send(new CheckNationalCodeCommand { Request = request })
+    is var response && response.IsSuccess
+        ? Ok(response)
+        : BadRequest(response);
+
+
+
+
+     
+
+
+
     }
 }

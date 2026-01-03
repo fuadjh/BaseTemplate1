@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.IdentityModels
 {
-    public class ApplicationUser : IdentityUser<int>
+    public class ApplicationUser : IdentityUser<Guid>
     {
         
     }

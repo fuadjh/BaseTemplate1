@@ -41,6 +41,11 @@ namespace Infrastructure.Repositories.LmsUsers
         {
             await _context.LmsUsers.AddAsync(user, cancellationToken);
         }
+
+        public Task UpdateAsync(LmsUser user, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 
 
