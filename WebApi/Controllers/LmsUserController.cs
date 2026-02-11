@@ -1,5 +1,6 @@
 ﻿using Application.Features.Identity.Command;
 using Application.Features.LmsUsers.Command;
+using Application.Features.LmsUsers.Queries.CheckNationalCode;
 using Common.RequestsDto;
 using Common.RequestsDto.Users;
 using MediatR;
@@ -17,8 +18,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("check-national-code")]
-        public async Task<IActionResult> CheckNationalCode([FromBody] CheckNationalCodeRequest request)
- => await Sender.Send(new CheckNationalCodeCommand { Request = request })
+        public async Task<IActionResult> CheckNationalCode([FromBody] string request)
+ => await Sender.Send(new CheckNationalCodeQuery { Request = request })
     is var response && response.IsSuccess
         ? Ok(response)
         : BadRequest(response);

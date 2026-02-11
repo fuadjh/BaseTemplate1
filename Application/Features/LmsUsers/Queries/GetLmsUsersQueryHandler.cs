@@ -31,7 +31,7 @@ namespace Application.Features.LmsUsers.Command
             CancellationToken cancellationToken)
         {
             var result = _identityService.CheckNationalCodeAsync(query.Request);
-            return await ResponseWrapper<PagedResult<result>>.Success()
+            return await ResponseWrapper<PagedResult<result>>.Success();
         }
     }
 

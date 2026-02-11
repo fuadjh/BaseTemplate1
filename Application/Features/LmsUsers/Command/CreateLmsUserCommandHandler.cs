@@ -2,6 +2,7 @@
 using Common.Enums;
 using Common.Wrapper;
 using Domain.Users;
+using Domain.Users.ValueObjects;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -18,12 +19,10 @@ namespace Application.Features.LmsUsers.Command
       string NasionalCode,
       string Email,
       string Mobile,
-      UserType UserType
-  ) : IRequest<ResponseWrapper<Guid>>;
+      UserType UserType  ) : IRequest<ResponseWrapper<Guid>>;
 
 
-    public class CreateLmsUserCommandHandler
-       : IRequestHandler<CreateLmsUserCommand, ResponseWrapper<Guid>>
+    public class CreateLmsUserCommandHandler   : IRequestHandler<CreateLmsUserCommand, ResponseWrapper<Guid>>
     {
         private readonly ILmsUserRepository _lmsUserRepository;
         private readonly IUnitOfWork _unitOfWork;

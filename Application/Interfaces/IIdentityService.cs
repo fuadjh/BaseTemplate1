@@ -1,7 +1,8 @@
-﻿using Common.RequestsDto;
-using Common.RequestsDto.Users;
+﻿using Application.Features.LmsUsers.Queries.CheckNationalCode;
+using Common.RequestsDto;
+
 using Common.ResponsesDto;
-using Common.ResponsesDto.Users;
+
 using Common.Wrapper;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace Application.Interfaces
     public interface IIdentityService
     {
 
-        Task<CheckNationalCodeResult> CheckNationalCodeAsync(CheckNationalCodeRequest request);
+        Task<CheckNationalCodeResult> CheckNationalCodeAsync(string request);
         Task<ResponseWrapper<string>> RegisterAsync(RegisterUserRequest registerUserCommand);
         Task<AuthenticationResult> LoginAsync(LoginRequest loginRequest);
         Task<ResponseWrapper<string>> AddRoleToUserAsync(string email, string roleName);

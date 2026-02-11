@@ -1,5 +1,5 @@
 ﻿using Domain.Common;
-using Domain.Common.Exceptions;
+using Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -3,6 +3,7 @@ using Application.Interfaces.Repositories;
 using Common.Enums;
 using Common.Wrapper;
 using Domain.Users;
+using Domain.Users.ValueObjects;
 using MediatR;
 using System;
 using System.Collections.Generic;

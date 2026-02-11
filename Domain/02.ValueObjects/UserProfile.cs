@@ -1,6 +1,6 @@
 ﻿using Common.Enums;
 using Domain.Common;
-using Domain.Common.Exceptions;
+using Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Users
+namespace Domain.Users.ValueObjects
 {
     public class UserProfile : ValueObject
     {

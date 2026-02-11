@@ -1,0 +1,18 @@
+﻿public async Task> Handle(...)
+{
+    // ۱. دریافت (Get from Repo)
+    var entity = await _repo.GetByIdAsync(request.Id);
+    
+    // ۲. بررسی منطق (Business Check)
+    if (entity == null) return ResponseWrapper.Failed("یافت نشد");
+    
+    // ۳. تبدیل و اجرا (Domain Action)
+    var valueObject = new SomeValueObject(request.SomeData);
+    entity.DoWork(valueObject);
+    
+    // ۴. ذخیره (Persistence)
+    await _unitOfWork.CommitAsync();
+    
+    // ۵. بازگشت (Response)
+    return ResponseWrapper.Success(entity.Id);
+}

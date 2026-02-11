@@ -1,12 +1,14 @@
 ﻿using Common.Enums;
-using Domain.Common.Exceptions;
+
 using Domain.Contracts;
+using Domain.Users.ValueObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Exceptions;
 
 namespace Domain.Users
 {
