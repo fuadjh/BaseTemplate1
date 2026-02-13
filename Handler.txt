@@ -16,3 +16,4 @@
     // ۵. بازگشت (Response)
     return ResponseWrapper.Success(entity.Id);
 }
+  //================================= Handler  =====================================

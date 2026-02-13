@@ -11,6 +11,7 @@ namespace Application.Features.Identity.Command
 {
     public record CreateRoleCommand(string RoleName) : IRequest<ResponseWrapper<string>>;
 
+    //================================= Handler  =====================================
     public class CreateRoleCommandHandler : IRequestHandler<CreateRoleCommand, ResponseWrapper<string>>
     {
         private readonly IIdentityService _identityService;

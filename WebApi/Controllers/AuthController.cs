@@ -1,19 +1,12 @@
 ﻿using Application.Features.Identity.Command;
 using Application.Features.Identity.Command.AddRoleToUser;
 using Application.Features.LmsUsers.Command;
-using Common.Requests;
 using Common.RequestsDto;
-using Common.RequestsDto.Users;
-using Common.Wrapper;
-using Infrastructure.Authorization;
-using Infrastructure.IdentityModels;
-using Infrastructure.Services;
+using MapsterMapper;
 using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.Contracts.Requests;
 using WebApi.Controllers;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace WebAPI.Controllers
 {
@@ -21,11 +14,11 @@ namespace WebAPI.Controllers
     [Route("api/[controller]")]
     public class AuthController : BaseApiController
     {
-        public AuthController(ISender sender) : base(sender)
+        public AuthController(ISender sender ,IMapper mapper) : base(sender, mapper)
         {
         }
 //-----------------------------------------------------------------
-        [HttpPost("register")]
+        [HttpPost("register_user")]
         public async Task<IActionResult> Register([FromBody] RegisterUserRequest command)
      => await Sender.Send(new RegisterUserCommand { registerUserRequest = command })
            is var response && response.IsSuccess
@@ -41,12 +34,12 @@ namespace WebAPI.Controllers
             : BadRequest(response);
 
 
-        [HttpPost("create-role")]
-        public async Task<IActionResult> CreateRole([FromBody] CreateRoleCommand command)
-        {
-            var result = await Sender.Send(command);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
+       // [HttpPost("create-role")]
+       // public async Task<IActionResult> CreateRole([FromBody] CreateRoleCommandHandler command)
+       // {
+        //    var result = await Sender.Send(command);
+      //      return result.IsSuccess ? Ok(result) : BadRequest(result);
+       // }
 
         [HttpPost("add-role")]
 
@@ -56,11 +49,19 @@ namespace WebAPI.Controllers
             return result.IsSuccess ? Ok(result) : BadRequest(result);
         }
 
-    
 
-
-
+        [HttpPost("register_user")]
+        public async Task<IActionResult> Register([FromBody] RegisterLmsUserRequest request)
+     => await Sender.Send(Mapper.خطا <RegisterLmsUserCommand>(request)) is var response
+        && response.IsSuccess
+         ? Ok(response)
+         : BadRequest(response);
 
 
     }
+
+
+
+
 }
+

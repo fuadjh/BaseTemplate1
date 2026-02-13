@@ -14,7 +14,7 @@ namespace Application.Features.LmsUsers.Queries.CheckNationalCode
     public class CheckNationalCodeQuery : IRequest<ResponseWrapper<CheckNationalCodeResult>>
     {
 
-        public string Request { get; set; }
+        public string NationalCode { get; init; } = default!;
     }
 
     //================================= Handler  =====================================
@@ -33,7 +33,7 @@ namespace Application.Features.LmsUsers.Queries.CheckNationalCode
             try
             {
                 var result = await _identityService
-                    .CheckNationalCodeAsync(request.Request);
+                    .CheckNationalCodeAsync(request.NationalCode);
 
                 return ResponseWrapper<CheckNationalCodeResult>.Success(result);
             }

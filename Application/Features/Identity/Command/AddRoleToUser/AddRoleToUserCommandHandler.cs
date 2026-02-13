@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 
 namespace Application.Features.Identity.Command.AddRoleToUser
 {
+
+    public record AddRoleToUserCommand(string Email, string RoleName) : IRequest<ResponseWrapper<string>>;
+
+    //================================= Handler  =====================================
     public class AddRoleToUserCommandHandler : IRequestHandler<AddRoleToUserCommand, ResponseWrapper<string>>
     {
         private readonly IIdentityService _identityService;

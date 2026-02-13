@@ -8,7 +8,7 @@ namespace Infrastructure.IdentityModels
 {
     public class RolePermission
     {
-        public int RoleId { get; set; }
+        public Guid RoleId { get; set; }
         public ApplicationRole Role { get; set; } = default!;
         public int PermissionId { get; set; }
         public ApplicationPermission Permission { get; set; } = default!;

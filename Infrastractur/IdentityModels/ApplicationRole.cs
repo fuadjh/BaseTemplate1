@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.IdentityModels
 {
-    public class ApplicationRole : IdentityRole<int>
+    public class ApplicationRole : IdentityRole<Guid>
     {
         public ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
     }

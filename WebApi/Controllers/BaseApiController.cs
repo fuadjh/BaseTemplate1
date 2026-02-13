@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿
+using MapsterMapper;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
@@ -8,10 +10,11 @@ namespace WebApi.Controllers
     public class BaseApiController : ControllerBase
     {
         protected readonly ISender Sender;
-
-        public BaseApiController(ISender sender)
+        private readonly IMapper Mapper;
+        public BaseApiController(ISender sender, IMapper mapper)
         {
             Sender = sender;
-        }
+            Mapper = mapper;
+    }
     }
 }

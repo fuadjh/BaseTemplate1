@@ -19,9 +19,9 @@ namespace Application.Features.LmsUsers.Command
     Email Email,
     Mobile Mobile,
     UserType UserType
-) : IRequest<ResponseWrapper<Guid>>;
+    ) : IRequest<ResponseWrapper<Guid>>;
 
-
+  //================================= Handler  =====================================
 
     public class RegisterLmsUserCommandHandler : IRequestHandler<RegisterLmsUserCommand, ResponseWrapper<Guid>>
     {

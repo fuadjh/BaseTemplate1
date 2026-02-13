@@ -37,8 +37,8 @@ namespace WebApi
 
             app.UseHttpsRedirection();
 
-            app.UseAuthentication();  // ← اضافه کن
-            app.UseAuthorization();   // ← اضافه کن
+            app.UseAuthentication();  
+            app.UseAuthorization();   
 
             app.MapControllers();
 

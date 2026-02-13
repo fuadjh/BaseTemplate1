@@ -1,12 +1,14 @@
 ﻿using Application.Features.Identity.Command;
+using Application.Features.LmsUsers.Queries.CheckNationalCode;
 using Application.Interfaces;
 using Common.RequestsDto;
-using Common.RequestsDto.Users;
+
 using Common.ResponsesDto;
-using Common.ResponsesDto.Users;
+
 using Common.Wrapper;
-using Domain.Common.Exceptions;
+
 using Domain.Users;
+using Exceptions;
 using Infrastructure.IdentityModels;
 using Microsoft.AspNetCore.Identity;
 using System;
@@ -111,15 +113,15 @@ namespace Infrastructure.Services
             return authResult;
         }
 
-        public async Task<CheckNationalCodeResult> CheckNationalCodeAsync(CheckNationalCodeRequest request)
+        public async Task<CheckNationalCodeResult> CheckNationalCodeAsync(string request)
         {
-            if (string.IsNullOrWhiteSpace(request.NationalCode))
+            if (string.IsNullOrWhiteSpace(request))
                 throw new DomainException("کد ملی الزامی است");
 
-            if (!NationalCode.IsValid(request.NationalCode))
+            if (!NationalCode.IsValid(request))
                 throw new DomainException("کد ملی نامعتبر است");
 
-            var identityUser = await _userManager.FindByNameAsync(request.NationalCode);
+            var identityUser = await _userManager.FindByNameAsync(request);
 
             if (identityUser == null)
             {
@@ -156,5 +158,7 @@ namespace Infrastructure.Services
 
             return newUser.Id;
         }
+
+        
     }
 }

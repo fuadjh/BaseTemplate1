@@ -16,7 +16,7 @@ namespace Application.Features.Identity.Command
         public LoginRequest loginRequest { get; set; }
     }
 
-
+    //================================= Handler  =====================================
 
     public class LoginUserCommandHandler : IRequestHandler<LoginUserCommand, ResponseWrapper<AuthenticationResult>>
     {
@@ -31,7 +31,7 @@ namespace Application.Features.Identity.Command
         {
             var result = await _identityService.LoginAsync(request.loginRequest);
 
-            return result;
+            return  ResponseWrapper<AuthenticationResult>.Success(result,"");
 
         }
     }

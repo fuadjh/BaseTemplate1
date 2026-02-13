@@ -33,7 +33,7 @@ namespace Infrastructure.Authorization
             using var scope = _provider.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            var intUserId = int.Parse(userId);
+            var intUserId = Guid.Parse(userId);
 
             var hasPermission = await (
                 from userRole in db.UserRoles
